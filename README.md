@@ -2,7 +2,9 @@
 wsl
 
 sudo apt update
+
 sudo apt install -y build-essential git curl unzip ripgrep fd-find fzf tmux zsh
+
 sudo add-apt-repository ppa:neovim-ppa/unstable
 sudo apt install neovim
 
