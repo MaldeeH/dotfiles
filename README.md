@@ -18,3 +18,5 @@ nvm use 20
 npm install -g @anthropic-ai/claude-code
 
 mkdir -p ~/code
+
+checkout how to use lazygit
