@@ -70,3 +70,5 @@ if command -v tmux &> /dev/null; then
 fi
 
 typeset -U path; path+=(/snap/bin)
+
+[ -f "$HOME/.dotfiles.sh" ] && source "$HOME/.dotfiles.sh"

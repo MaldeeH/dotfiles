@@ -55,3 +55,4 @@ nvm()  { lazy_load_nvm; command nvm  "$@"; }
 # autoload -U +X bashcompinit && bashcompinit
 # [[ -s "$NVM_DIR/bash_completion" ]] && . "$NVM_DIR/bash_completion"
 
+[ -f "$HOME/.dotfiles.sh" ] && source "$HOME/.dotfiles.sh"
