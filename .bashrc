@@ -56,3 +56,5 @@ nvm()  { lazy_load_nvm; command nvm  "$@"; }
 # [[ -s "$NVM_DIR/bash_completion" ]] && . "$NVM_DIR/bash_completion"
 
 [ -f "$HOME/.dotfiles.sh" ] && source "$HOME/.dotfiles.sh"
+eval "$(ssh-agent -s)" >/dev/null 2>&1
+ssh-add ~/.ssh/id_ed25519 >/dev/null 2>&1 || true

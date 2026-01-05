@@ -1,5 +1,5 @@
 vim.cmd([[set noswapfile]])
-vim.opt.winborder = "single"
+vim.opt.winborder = "rounded"
 vim.opt.number = true
 vim.opt.wrap = true
 vim.opt.tabstop = 2
@@ -30,6 +30,7 @@ vim.diagnostic.config({
 
 require "mason".setup()
 require("telescope").setup()
+
 require("mason-lspconfig").setup({
 				ensure_installed = { "tinymist" },
 				automatic_installation = true,
@@ -61,14 +62,22 @@ require("oil").setup({
 vim.cmd("colorscheme gruvbox-material")
 vim.g.gruvbox_material_background = 'medium'
 vim.g.gruvbox_material_foreground = 'material'
+local function set_diag_colors()
+  local light_red = "#ff6b6b"
+  vim.api.nvim_set_hl(0, "DiagnosticVirtualTextError", { fg = light_red, bg = "NONE" })
+  vim.api.nvim_set_hl(0, "DiagnosticVirtualLinesError", { fg = light_red, bg = "NONE" })
+end
+set_diag_colors()
+vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
+vim.api.nvim_set_hl(0, "FloatBorder", { bg = "NONE" })
 
 --statusline
 vim.o.statusline = table.concat({
   "%f",           -- file path
   "%=",
-  "%{&modified ? '✱' : ''}", -- star when buffer is modified
-  "%=",           -- left/right separator
-  "%l:%c ",       -- line:col
+  "%{&modified ? '✱' : ''}", -- lil star when buffer is modified
+  "%=",           
+  "%{printf('%4d:%-3d', line('.'), col('.'))} "
 })
 
 vim.lsp.config('tinymist', {
@@ -118,6 +127,9 @@ vim.keymap.set("n", "<leader>e", "<cmd>Oil<CR>")
 vim.keymap.set("n", "<leader>tp", "<cmd>w<CR><cmd>!typst compile %<CR>")
 vim.keymap.set("n", "<leader>r", ":e<CR>")
 vim.keymap.set("n", "<leader>f", ":Telescope find_files <CR>")
+vim.keymap.set("n", "<leader>d", function()
+				vim.diagnostic.open_float(nil, { border = "rounded", source = "always", scope = "cursor" })
+end)
 vim.keymap.set("v", "<C-c>", '"+y')
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
@@ -129,17 +141,14 @@ vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR><Esc>", {
 vim.opt.linebreak = true
 vim.opt.breakindent = true
 
--- make symilnks or setup stow and push new dotfiles changes to git
 -- The number on the bottom most row should show the length of the file in line numbers
 --
 -- Need to learn lsp for this:
--- add a shortcut "dc" to delete coomment. Actually now just use the comment/uncomment shortcut.
--- show syntax error in light red not in the same color that comments are. Thats some lsp config
 -- view function definitions on hover
 --
 -- ( CTRL + R + " ) to paste while in insert mode
 -- ctrl + o to jump back
 -- ctrl + i to rejump forward
 --
--- c++
+-- Deep tools:
 -- lldb, valgrind, buildling with fsanitizer. This is the approach for the future for c++
