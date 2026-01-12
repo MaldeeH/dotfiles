@@ -1,40 +1,49 @@
+_G.NVIM_START_DIR = vim.fn.getcwd()
 vim.cmd([[set noswapfile]])
 vim.opt.winborder = "rounded"
 vim.opt.number = true
 vim.opt.wrap = true
-vim.opt.tabstop = 2
 vim.opt.swapfile = false
 vim.opt.smartindent = true
 vim.opt.termguicolors = true
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
 vim.opt.laststatus = 2
 vim.opt.winblend = 0
+vim.opt.linebreak = true
+vim.opt.breakindent = true
 
 
 vim.pack.add( {
-		  { src = "https://github.com/sainnhe/gruvbox-material" },
-		  { src = "https://github.com/stevearc/oil.nvim" },
-		  { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
-		  { src = 'https://github.com/neovim/nvim-lspconfig' },
-		  { src = "https://github.com/mason-org/mason.nvim" },
-		  { src = "https://github.com/mason-org/mason-lspconfig.nvim" },
-			{ src = "https://github.com/nvim-telescope/telescope.nvim",          version = "0.1.8" }, 
-			{ src = "https://github.com/nvim-lua/plenary.nvim" },
+	{ src = "https://github.com/sainnhe/gruvbox-material" },
+	{ src = "https://github.com/stevearc/oil.nvim" },
+	{ src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
+	{ src = 'https://github.com/neovim/nvim-lspconfig' },
+	{ src = "https://github.com/mason-org/mason.nvim" },
+	{ src = "https://github.com/mason-org/mason-lspconfig.nvim" },
+	{ src = "https://github.com/nvim-telescope/telescope.nvim",          version = "0.1.8" }, 
+	{ src = "https://github.com/nvim-lua/plenary.nvim" },
 })
 
 vim.diagnostic.config({
-				virtual_text = true,
-				signs = false,
-				underline = true,
-				update_in_insert = false,
+	virtual_text = true,
+	signs = false,
+	underline = true,
+	update_in_insert = false,
 })
 
 require "mason".setup()
 require("telescope").setup()
 
 require("mason-lspconfig").setup({
-				ensure_installed = { "tinymist" },
-				automatic_installation = true,
+	ensure_installed = { "tinymist" },
+	automatic_installation = true,
 })
+
+require('lspconfig').clangd.setup {
+	cmd = {"clangd", "--compile-commands-dir=build"},
+}
+
 
 local telescope = require("telescope")
 telescope.setup({
@@ -53,8 +62,8 @@ telescope.setup({
 })
 
 require("oil").setup({
-				skip_confirm_for_simple_edits=true,
-				delete_to_trash = true,
+	skip_confirm_for_simple_edits=true,
+	delete_to_trash = true,
 })
 
 
@@ -63,62 +72,131 @@ vim.cmd("colorscheme gruvbox-material")
 vim.g.gruvbox_material_background = 'medium'
 vim.g.gruvbox_material_foreground = 'material'
 local function set_diag_colors()
-  local light_red = "#ff6b6b"
-  vim.api.nvim_set_hl(0, "DiagnosticVirtualTextError", { fg = light_red, bg = "NONE" })
-  vim.api.nvim_set_hl(0, "DiagnosticVirtualLinesError", { fg = light_red, bg = "NONE" })
+	local light_red = "#ff6b6b"
+	local light_yellow = "#ffea00"
+	vim.api.nvim_set_hl(0, "DiagnosticVirtualTextError", { fg = light_red, bg = "NONE" })
+	vim.api.nvim_set_hl(0, "DiagnosticVirtualLinesError", { fg = light_red, bg = "NONE" })
+	vim.api.nvim_set_hl(0, "DiagnosticVirtualTextWarn",   { fg = light_yellow, bg = "NONE" })
+	vim.api.nvim_set_hl(0, "DiagnosticVirtualLinesWarn",  { fg = light_yellow, bg = "NONE" })
 end
 set_diag_colors()
 vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
 vim.api.nvim_set_hl(0, "FloatBorder", { bg = "NONE" })
+vim.api.nvim_set_hl(0, "StatusLineError", { fg = "#ff6b6b", bg = "NONE" })
+vim.api.nvim_set_hl(0, "StatusLineWarn",  { fg = "#ffea00", bg = "NONE" })
 
 --statusline
+function _G.Statusline_error_count()
+  local bufnr = 0
+  local errors = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.ERROR })
+  if errors == 0 then
+    return ""
+  end
+  return "E" .. errors
+end
+
+function _G.Statusline_warn_count()
+  local bufnr = 0
+  local warns = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.WARN })
+  if warns == 0 then
+    return ""
+  end
+  return "W" .. warns
+end
+
+function _G.Statusline_git_branch()
+  if vim.bo.filetype == "oil" then
+    return ""
+  end
+  local dir = vim.fn.expand("%:p:h")
+  if dir == "" then
+    dir = vim.fn.getcwd()
+  end
+  local git_dir = vim.fn.finddir(".git", dir .. ";")
+  if git_dir == "" then
+    return "" -- not a git repo
+  end
+  local result = vim.fn.systemlist({ "git", "-C", dir, "rev-parse", "--abbrev-ref", "HEAD" })
+  local branch = result[1] or ""
+  if branch == "" or branch:match("^fatal:") then
+    return ""
+  end
+  return " on " .. branch
+end
+
 vim.o.statusline = table.concat({
-  "%f",           -- file path
+  "%f",  -- file path
+  "%{v:lua.Statusline_git_branch()}", -- branch
+
+  "%=", -- Spacing
+
+  -- center: errors / warnings / modified
+  "%#StatusLineError#",
+  "%{v:lua.Statusline_error_count()}",
+  "%*",
+  " ",
+  "%{&modified ? '✱' : ''}",
+  "%#StatusLineWarn#",
+  "%{v:lua.Statusline_warn_count()}",
+  "%*",
+  " ",
+
   "%=",
-  "%{&modified ? '✱' : ''}", -- lil star when buffer is modified
-  "%=",           
-  "%{printf('%4d:%-3d', line('.'), col('.'))} "
+
+  "%{printf('%4d:%-3d', line('.'), col('.'))} ",
 })
 
+--lsp
 vim.lsp.config('tinymist', {
-  cmd = { 'tinymist' },
-  filetypes = { 'typst' },
-  root_markers = { 'typst.toml', '.git' }, -- workspace detection
-  settings = {
-    exportPdf = "never",
-    formatterMode = "typstyle"
-  },
+	cmd = { 'tinymist' },
+	filetypes = { 'typst' },
+	root_markers = { 'typst.toml', '.git' }, -- workspace detection
+	settings = {
+		exportPdf = "never",
+		formatterMode = "typstyle"
+	},
 })
 
 vim.lsp.enable(
-		  {
-					 "lua_ls",
-					 "tinymist",
-					 "emmetls",
-					 "clangd",
-					 "glsl_analyzer",
-					 "hlint"
-		  }
+	{
+		"lua_ls",
+		"tinymist",
+		"glsl_analyzer",
+	}
 )
 
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = "oil",
-  callback = function(event)
-    vim.keymap.set("n", "<C-s>", "<cmd>w<CR>", {
-      buffer = event.buf,
-      desc = "Save Oil buffer",
-    })
+	pattern = "oil",
+	callback = function(event)
+		vim.keymap.set("n", "<C-s>", "<cmd>w<CR>", {
+			buffer = event.buf,
+			desc = "Save Oil buffer",
+		})
+	end,
+})
+
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = vim.api.nvim_create_augroup("UserLspKeymaps", {}),
+  callback = function(ev)
+    local opts = { buffer = ev.buf, silent = true }
+    local builtin = require("telescope.builtin")
+
+    -- Use Telescope pickers instead of raw LSP functions:
+    vim.keymap.set("n", "gd", builtin.lsp_definitions, opts)
+    vim.keymap.set("n", "gr", builtin.lsp_references, opts)
+    vim.keymap.set("n", "gi", builtin.lsp_implementations, opts)
+
+    -- These can stay on the plain LSP funcs:
   end,
 })
 
 vim.cmd [[set completeopt+=menuone,noselect,popup]]
 
--- Quick way to jump to editing this file:
+-- Keybinds:
 local init = vim.fs.normalize(vim.fn.stdpath("config") .. "/init.lua")
 vim.api.nvim_create_user_command("Config", function()
-  vim.cmd.edit(vim.fn.fnameescape(init))
+	vim.cmd.edit(vim.fn.fnameescape(init))
 end, { desc = "Open init.lua" })
-
 vim.g.mapleader = " "
 vim.keymap.set("n", "<leader>q", ':q<CR>')
 vim.keymap.set("n", "<leader>w", ':w<CR>')
@@ -127,28 +205,78 @@ vim.keymap.set("n", "<leader>e", "<cmd>Oil<CR>")
 vim.keymap.set("n", "<leader>tp", "<cmd>w<CR><cmd>!typst compile %<CR>")
 vim.keymap.set("n", "<leader>r", ":e<CR>")
 vim.keymap.set("n", "<leader>f", ":Telescope find_files <CR>")
-vim.keymap.set("n", "<leader>d", function()
-				vim.diagnostic.open_float(nil, { border = "rounded", source = "always", scope = "cursor" })
-end)
+vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+vim.keymap.set("n", "K",  vim.lsp.buf.hover, opts)
+vim.keymap.set("n", "<leader>n", function()
+	vim.cmd("vsplit C:/code/notes.md")
+end, { desc = "Open notes.md in split" })
+
 vim.keymap.set("v", "<C-c>", '"+y')
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR><Esc>", {
-  silent = true,
-  desc = "Clear search highlight",
+	silent = true,
+	desc = "Clear search highlight",
 })
 
-vim.opt.linebreak = true
-vim.opt.breakindent = true
+vim.keymap.set("n", "<leader>gg", function()
+  local dir = _G.NVIM_START_DIR
+  vim.cmd("Oil " .. vim.fn.fnameescape(dir))
+end, { desc = "Open start directory in Oil" })
+vim.keymap.set("n", "<leader>cd", function()
+  local dir
+  if vim.bo.filetype == "oil" then
+    dir = require("oil").get_current_dir()
+  else
+    dir = vim.fn.expand("%:p:h")
+  end
+  if not dir or dir == "" then
+    dir = vim.fn.getcwd()
+  end
+  vim.fn.setreg("+", dir)
+  vim.notify("Copied directory: " .. dir, vim.log.levels.INFO)
+end, { desc = "Copy directory of current file/Oil view" })
 
--- The number on the bottom most row should show the length of the file in line numbers
---
--- Need to learn lsp for this:
--- view function definitions on hover
+
+
+--Well-Specific Keybinds:
+--Watch Logs
+vim.keymap.set("n", "<leader>wl", function()
+  vim.cmd([[terminal powershell -NoLogo -Command "Get-Content '.\WellPluginLog.txt' -Tail 150 -Wait"]])
+  vim.schedule(function()
+    vim.cmd("normal! G")
+  end)
+end, { desc = "Tail WellPluginLog.txt" })
+
+--Well-Specific Keybinds:
+vim.keymap.set("n", "<leader>wb", function()
+  vim.cmd([[terminal powershell -NoLogo -Command "cd C:/code/Well; cmake --build build --target Well_VST3; Read-Host 'Build finished. Press Enter to close'" ]])
+end, { desc = "Build Well_VST3 (cmake --build build --target Well_VST3)" })
+
+-- Run AudioPluginHost ( <leader>wr )
+vim.keymap.set("n", "<leader>wr", function()
+  vim.fn.jobstart({ "C:/code-tools/AudioPluginHost/AudioPluginHost.exe" }, {
+    detach = true,
+  })
+end, { desc = "Run AudioPluginHost.exe" })
+
+
+
+-- C:\code-tools\AudioPluginHost\AudioPluginHost.exe
+
+-- ctrl + g to see number of lines in file
 --
 -- ( CTRL + R + " ) to paste while in insert mode
 -- ctrl + o to jump back
 -- ctrl + i to rejump forward
 --
+-- Press F11 to go into full blast focus mode
+-- THIS IS AMAZING
+--
+--Show diagnosics: <C-w>d
+--Jump diagnostics: ]d or [d
+--
+--
 -- Deep tools:
 -- lldb, valgrind, buildling with fsanitizer. This is the approach for the future for c++
+-- Tab should not go so far
