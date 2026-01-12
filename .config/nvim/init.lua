@@ -12,8 +12,14 @@ vim.opt.laststatus = 2
 vim.opt.winblend = 0
 vim.opt.linebreak = true
 vim.opt.breakindent = true
+vim.diagnostic.config({
+	virtual_text = true,
+	signs = false,
+	underline = true,
+	update_in_insert = false,
+})
 
-
+--plugins
 vim.pack.add( {
 	{ src = "https://github.com/sainnhe/gruvbox-material" },
 	{ src = "https://github.com/stevearc/oil.nvim" },
@@ -25,13 +31,7 @@ vim.pack.add( {
 	{ src = "https://github.com/nvim-lua/plenary.nvim" },
 })
 
-vim.diagnostic.config({
-	virtual_text = true,
-	signs = false,
-	underline = true,
-	update_in_insert = false,
-})
-
+--plugin configs
 require "mason".setup()
 require("telescope").setup()
 
@@ -44,6 +44,10 @@ require('lspconfig').clangd.setup {
 	cmd = {"clangd", "--compile-commands-dir=build"},
 }
 
+require("oil").setup({
+	skip_confirm_for_simple_edits=true,
+	delete_to_trash = true,
+})
 
 local telescope = require("telescope")
 telescope.setup({
@@ -60,12 +64,6 @@ telescope.setup({
 		}
 	}
 })
-
-require("oil").setup({
-	skip_confirm_for_simple_edits=true,
-	delete_to_trash = true,
-})
-
 
 -- colors
 vim.cmd("colorscheme gruvbox-material")
@@ -130,7 +128,6 @@ vim.o.statusline = table.concat({
 
   "%=", -- Spacing
 
-  -- center: errors / warnings / modified
   "%#StatusLineError#",
   "%{v:lua.Statusline_error_count()}",
   "%*",
@@ -180,13 +177,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(ev)
     local opts = { buffer = ev.buf, silent = true }
     local builtin = require("telescope.builtin")
-
-    -- Use Telescope pickers instead of raw LSP functions:
     vim.keymap.set("n", "gd", builtin.lsp_definitions, opts)
     vim.keymap.set("n", "gr", builtin.lsp_references, opts)
     vim.keymap.set("n", "gi", builtin.lsp_implementations, opts)
-
-    -- These can stay on the plain LSP funcs:
   end,
 })
 
@@ -237,30 +230,26 @@ vim.keymap.set("n", "<leader>cd", function()
   vim.notify("Copied directory: " .. dir, vim.log.levels.INFO)
 end, { desc = "Copy directory of current file/Oil view" })
 
-
-
---Well-Specific Keybinds:
---Watch Logs
-vim.keymap.set("n", "<leader>wl", function()
+-- Well-Specific Keybinds:
+-- Watch Logs
+vim.keymap.set("n", "<leader>al", function()
   vim.cmd([[terminal powershell -NoLogo -Command "Get-Content '.\WellPluginLog.txt' -Tail 150 -Wait"]])
   vim.schedule(function()
     vim.cmd("normal! G")
   end)
 end, { desc = "Tail WellPluginLog.txt" })
 
---Well-Specific Keybinds:
-vim.keymap.set("n", "<leader>wb", function()
+-- build
+vim.keymap.set("n", "<leader>ab", function()
   vim.cmd([[terminal powershell -NoLogo -Command "cd C:/code/Well; cmake --build build --target Well_VST3; Read-Host 'Build finished. Press Enter to close'" ]])
 end, { desc = "Build Well_VST3 (cmake --build build --target Well_VST3)" })
 
--- Run AudioPluginHost ( <leader>wr )
-vim.keymap.set("n", "<leader>wr", function()
+-- Run AudioPluginHost 
+vim.keymap.set("n", "<leader>ar", function()
   vim.fn.jobstart({ "C:/code-tools/AudioPluginHost/AudioPluginHost.exe" }, {
     detach = true,
   })
 end, { desc = "Run AudioPluginHost.exe" })
-
-
 
 -- C:\code-tools\AudioPluginHost\AudioPluginHost.exe
 
@@ -270,7 +259,7 @@ end, { desc = "Run AudioPluginHost.exe" })
 -- ctrl + o to jump back
 -- ctrl + i to rejump forward
 --
--- Press F11 to go into full blast focus mode
+-- Press F11 to full blast focus mode
 -- THIS IS AMAZING
 --
 --Show diagnosics: <C-w>d
@@ -279,4 +268,3 @@ end, { desc = "Run AudioPluginHost.exe" })
 --
 -- Deep tools:
 -- lldb, valgrind, buildling with fsanitizer. This is the approach for the future for c++
--- Tab should not go so far
