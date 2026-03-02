@@ -196,8 +196,9 @@ vim.keymap.set("n", "<leader>w", ':w<CR>')
 vim.keymap.set("n", "<leader>c", [[:%s/\<<C-r><C-w>\>//gI<Left><Left><Left>]])
 vim.keymap.set("n", "<leader>e", "<cmd>Oil<CR>")
 vim.keymap.set("n", "<leader>tp", "<cmd>w<CR><cmd>!typst compile %<CR>")
-vim.keymap.set("n", "<leader>r", ":e<CR>")
+vim.keymap.set("n", "<leader>r", ":e!<CR>")
 vim.keymap.set("n", "<leader>f", ":Telescope find_files <CR>")
+vim.keymap.set("n", "<leader>h", ":ClangdSwitchSourceHeader <CR>")
 vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
 vim.keymap.set("n", "K",  vim.lsp.buf.hover, opts)
 vim.keymap.set("n", "<leader>n", function()
@@ -241,7 +242,7 @@ end, { desc = "Tail WellPluginLog.txt" })
 
 -- build
 vim.keymap.set("n", "<leader>ab", function()
-  vim.cmd([[terminal powershell -NoLogo -Command "cd C:/code/Well; cmake --build build --target Well_VST3; Read-Host 'Build finished. Press Enter to close'" ]])
+  vim.cmd([[terminal powershell -NoLogo -Command "Stop-Process -Name 'audiopluginhostprocess' -Force -ErrorAction SilentlyContinue; cd C:/code/Well; cmake --build build --target Well_VST3; Read-Host 'Build finished. Press Enter to close'" ]])
 end, { desc = "Build Well_VST3 (cmake --build build --target Well_VST3)" })
 
 -- Run AudioPluginHost 
@@ -251,10 +252,8 @@ vim.keymap.set("n", "<leader>ar", function()
   })
 end, { desc = "Run AudioPluginHost.exe" })
 
--- C:\code-tools\AudioPluginHost\AudioPluginHost.exe
-
--- ctrl + g to see number of lines in file
 --
+-- ctrl + g to see number of lines in file
 -- ( CTRL + R + " ) to paste while in insert mode
 -- ctrl + o to jump back
 -- ctrl + i to rejump forward
@@ -268,3 +267,14 @@ end, { desc = "Run AudioPluginHost.exe" })
 --
 -- Deep tools:
 -- lldb, valgrind, buildling with fsanitizer. This is the approach for the future for c++
+-- How can i do execute the "fix available"? - just press "g r a" (should work)
+-- [d and ]d to jump diagnostics
+--
+-- MORE TODO:
+-- Branch name should also show in oil
+-- when copying from oil it should not show the line numbers 
+-- public private should not cause indentation with autoindent
+--
+-- Ask claude or something directly in the command line with "??" command. so it goes:
+-- ?? Whats my age again
+-- Get coding autocomplete
